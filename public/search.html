@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Find Paramedical Professional</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .search-form {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        input[type="text"], select {
+            padding: 10px;
+            font-size: 16px;
+        }
+        button {
+            padding: 10px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .results {
+            margin-top: 20px;
+        }
+        .loading {
+            margin-top: 20px;
+            font-style: italic;
+        }
+        .error {
+            color: red;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Find Paramedical Professional</h1>
+        <form class="search-form" id="searchForm">
+            <input type="text" id="city" placeholder="Enter City" required>
+            <input type="text" id="specialization" placeholder="Enter Specialization (e.g., Orthopedic)" required>
+            <button type="submit">Search</button>
+        </form>
+        <div class="results" id="results"></div>
+        <div class="loading" id="loading" style="display:none;">Loading...</div>
+        <div class="error" id="error" style="display:none;"></div>
+    </div>
+
+    <script>
+        document.getElementById('searchForm').addEventListener('submit', async function (e) {
+            e.preventDefault();
+
+            const city = document.getElementById('city').value;
+            const specialization = document.getElementById('specialization').value;
+            const resultsDiv = document.getElementById('results');
+            const loadingDiv = document.getElementById('loading');
+            const errorDiv = document.getElementById('error');
+
+            // Clear previous results and error messages
+            resultsDiv.innerHTML = '';
+            errorDiv.style.display = 'none';
+
+            loadingDiv.style.display = 'block'; // Show loading message
+
+            try {
+                const response = await fetch('http://localhost:3000/api/search-paramedical', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ city, specialization })
+                });
+
+                // Check if response is OK
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const results = await response.json();
+
+                loadingDiv.style.display = 'none'; // Hide loading message
+
+                if (results.length === 0) {
+                    resultsDiv.innerHTML = '<p>No professionals found.</p>';
+                } else {
+                    let resultHTML = '<ul>';
+                    results.forEach(prof => {
+                        resultHTML += `<li>${prof.full_name} (${prof.specialization}) - ${prof.city}</li>`;
+                    });
+                    resultHTML += '</ul>';
+                    resultsDiv.innerHTML = resultHTML;
+                }
+
+            } catch (error) {
+                loadingDiv.style.display = 'none'; // Hide loading message
+                errorDiv.style.display = 'block';
+                errorDiv.innerHTML = `Error fetching results: ${error.message}`;
+            }
+        });
+    </script>
+</body>
+</html>
